@@ -121,13 +121,14 @@ func (d *Discovery) candidates() []string {
 func parseResolver(s string) (netip.AddrPort, error) {
 	s = strings.TrimSpace(s)
 	if ap, err := netip.ParseAddrPort(s); err == nil {
-		return ap, nil
+		// An IPv4-mapped address is its IPv4 resolver (macOS lists each nameserver both ways).
+		return netip.AddrPortFrom(ap.Addr().Unmap(), ap.Port()), nil
 	}
 	a, err := netip.ParseAddr(s)
 	if err != nil {
 		return netip.AddrPort{}, err
 	}
-	return netip.AddrPortFrom(a, 53), nil
+	return netip.AddrPortFrom(a.Unmap(), 53), nil
 }
 
 // readList reads a bundled list, skipping comments and blanks. A missing country is just empty.
