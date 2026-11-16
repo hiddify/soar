@@ -269,6 +269,8 @@ func (s *session) receive(pn uint64, frames []byte, now time.Time) (bool, error)
 					st.sbuf, st.spending, st.sacked = nil, nil, nil
 					st.sfin, st.saborted = true, true
 					st.kill() // ends any pending dial (see serveStream); buffered data stays readable
+				} else if s.client && f.val == resetUnreachable {
+					st.abort(ErrUnreachable)
 				} else {
 					st.abort(ErrStreamReset)
 				}

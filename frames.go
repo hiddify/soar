@@ -16,6 +16,10 @@ const (
 	frOpened    = 0x07 // server→client: stream id, 0: the stream's destination dial succeeded
 	frStream    = 0x08 // 0x08|OFF|LEN|FIN: stream id, [offset], [length], data
 
+	// resetUnreachable is the RESET code a server sends when the destination's dial failed or
+	// was refused. Code 0 means the peer stops reading, or had no slot for the stream.
+	resetUnreachable = 1
+
 	streamFin = 0x01
 	streamLen = 0x02
 	streamOff = 0x04

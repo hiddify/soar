@@ -1088,8 +1088,31 @@ func TestNewRoundTripperFailsWhenDestinationUnreachable(t *testing.T) {
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if _, err := c.NewRoundTripper(ctx, dead); err == nil {
-		t.Fatal("NewRoundTripper succeeded though the destination is unreachable")
+	if _, err := c.NewRoundTripper(ctx, dead); !errors.Is(err, ErrUnreachable) {
+		t.Fatalf("NewRoundTripper to an unreachable destination: %v, want %v", err, ErrUnreachable)
+	}
+}
+
+// A stream whose destination the server can't reach reads as unreachable, not as a bare reset,
+// so a log tells "the server can't reach this site" from "the server dropped the stream".
+func TestUnreachableDestinationReadsAsUnreachable(t *testing.T) {
+	srv, pub := startServer(t)
+	ln, _ := net.Listen("tcp", "127.0.0.1:0")
+	dead := ln.Addr().String()
+	ln.Close()
+	c, _ := NewClient(Config{Zone: testZone, ServerKey: pub, Resolvers: []string{srv}})
+	defer c.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	conn, err := c.DialContext(ctx, "tcp", dead)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	_, err = conn.Read(make([]byte, 1))
+	if !errors.Is(err, ErrUnreachable) || !errors.Is(err, ErrStreamReset) {
+		t.Fatalf("read: %v, want %v (a kind of %v)", err, ErrUnreachable, ErrStreamReset)
 	}
 }
 

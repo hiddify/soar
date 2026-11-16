@@ -631,7 +631,7 @@ func (ss *srvSession) serveStream(st *stream) {
 		// A graceful close ends in a FIN and then a "stop sending" RESET, which tells a client
 		// waiting for OPENED nothing, so it would wait forever.
 		ss.mu.Lock()
-		ss.queueCtrl(ctrl{typ: frReset, id: st.id, val: 1})
+		ss.queueCtrl(ctrl{typ: frReset, id: st.id, val: resetUnreachable})
 		st.abort(errors.New("soar: bad destination"))
 		ss.maybeRemove(st)
 		ss.mu.Unlock()
@@ -669,7 +669,7 @@ func (ss *srvSession) serveStream(st *stream) {
 	if err != nil {
 		ss.srv.cfg.Logger.Debug("dial failed", "addr", addr, "err", err)
 		ss.mu.Lock()
-		ss.queueCtrl(ctrl{typ: frReset, id: st.id, val: 1})
+		ss.queueCtrl(ctrl{typ: frReset, id: st.id, val: resetUnreachable})
 		st.abort(err)
 		ss.maybeRemove(st)
 		ss.mu.Unlock()

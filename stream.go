@@ -3,6 +3,7 @@ package soar
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -12,6 +13,10 @@ import (
 
 var (
 	ErrStreamReset = errors.New("soar: stream reset by peer")
+	// ErrUnreachable is the reset a server sends when it can't reach the stream's destination:
+	// its dial failed or was refused (by default only ports 80 and 443 and public addresses are
+	// allowed), or the destination was malformed. errors.Is(err, ErrStreamReset) holds for it.
+	ErrUnreachable = fmt.Errorf("%w: the server could not reach the destination", ErrStreamReset)
 	ErrClosed      = errors.New("soar: closed")
 )
 
